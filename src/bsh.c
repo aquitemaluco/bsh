@@ -40,10 +40,33 @@ int main(int argc, char *argv[])
 				char **pfile;
 				int fcount = 0, parcount = 0;
 				int fd, fopened;
+				
+				//Tubos e conexoes "Tigre"/"Amanco"! :)
+				if (count) {
+					if (i == (count+1)) {
+						close(ppipes[i][1]); //stdout ultimo processo
+					} else {
+						dup2(ppipes[i][1], 1); //stdout
+					}
+					
+					if (i == 0) {
+						close(ppipes[i][0]); //stdin primeiro processo
+					} else {
+						dup2(ppipes[i-1][0], 0); //stdin
+						close(ppipes[i][1]);
+					}
+					
+					int n;
+					for (n=0; n<count; n++) {
+						//Fecha copia do pipe do processo filho
+						close(ppipes[n][0]);
+						close(ppipes[n][1]);
+					}
+				}
+				
 				//Verifica se tem redirecionamento para arquivo.
 				pfile = explode('>', trim(progs[i]), &fcount);
 				if (fcount) {
-					fflush(stdout);
 					//Abre arquivo e redireciona saida padrao
 					if ((fd = open(trim(pfile[1]), O_CREAT|O_WRONLY|O_TRUNC,
 							0666)) == -1) {
@@ -68,21 +91,6 @@ int main(int argc, char *argv[])
 						dup2(fd, 0); // 0 - entrada padrao
 					} else {
 						pfile[0] = progs[i];
-						
-						//Tubos e conexoes "Tigre"/"Amanco"! :)
-						if (count) {
-							if (i == (count+1)) {
-								close(ppipes[i][1]); //stdout ultimo processo
-							} else {
-								dup2(ppipes[i][1], 1); //stdout
-							}
-							
-							if (i == 0) {
-								close(ppipes[i][0]); //stdin primeiro processo
-							} else {
-								dup2(ppipes[i-1][0], 0); //stdout
-							}
-						}
 					}
 				}
 				
@@ -102,6 +110,7 @@ int main(int argc, char *argv[])
 				exit(0);
 			}
 			wait(&status);
+			close(ppipes[i][1]);
 		}
 	} while(1);
 }
