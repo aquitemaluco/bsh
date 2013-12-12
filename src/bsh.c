@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 	do {
 		printf("cmd> ");
 		bsh_read_line(line);
+		if (! strcmp("exit", line)) exit(0); //Saida a pedido do usuario 
+		
 		progs = explode('|', line, &count);
 
 		PIPE_T ppipes[count];
@@ -53,7 +55,6 @@ int main(int argc, char *argv[])
 						close(ppipes[i][0]); //stdin primeiro processo
 					} else {
 						dup2(ppipes[i-1][0], 0); //stdin
-						close(ppipes[i][1]);
 					}
 					
 					int n;
@@ -96,7 +97,6 @@ int main(int argc, char *argv[])
 				
 				char **plist = explode(' ', trim(pfile[0]), &parcount);
 				execv(plist[0], plist);
-				printf("%c", EOF);
 				fflush(stdout);
 				
 				//Limpeza
